@@ -22,4 +22,8 @@ public class Group implements IGroup{
     public boolean delete() {
         return false;
     }
+
+    public static void main(String[] args) {
+
+    }
 }
