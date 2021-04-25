@@ -53,6 +53,10 @@ public class Message implements IMessage,Utils,Comparable<Message>{
         return attachment;
     }
 
+    public void setAttachment(String attachment) {
+        this.attachment = attachment;
+    }
+
     @Override
     public boolean send() {
         Connection con;

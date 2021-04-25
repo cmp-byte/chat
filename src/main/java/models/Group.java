@@ -3,6 +3,7 @@ package models;
 import org.apache.http.HttpEntity;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpGet;
+import org.apache.http.conn.HttpHostConnectException;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
 import org.apache.http.util.EntityUtils;
@@ -58,7 +59,9 @@ public class Group implements IGroup,Utils{
                         rs.getString("attachment")
                 );
                 if(message.getAttachment()!=null){
-                    get_file(message.getAttachment());
+                    if(!get_file(message.getAttachment())){
+                        message.setAttachment(null);
+                    }
                 }
                 messages.add(message);
             }
@@ -79,7 +82,7 @@ public class Group implements IGroup,Utils{
 
     }
 
-    private static void get_file(String name){
+    private static boolean get_file(String name){
         CloseableHttpClient httpclient = HttpClients.createDefault();
         HttpGet httpGet = new HttpGet(fileServerURL+"api/files/"+name);
         try (CloseableHttpResponse response = httpclient.execute(httpGet)) {
@@ -89,8 +92,10 @@ public class Group implements IGroup,Utils{
                 stream.write(array);
             }
             EntityUtils.consume(responseEntity);
+            return true;
         } catch (IOException e) {
-            e.printStackTrace();
+            //e.printStackTrace();
+            return false;
         }
     }
 
