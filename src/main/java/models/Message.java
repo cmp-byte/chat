@@ -26,17 +26,33 @@ public class Message implements IMessage,Utils,Comparable<Message>{
     private String contentText;
     private String attachment;
     private LocalDateTime sendTime;
+
+    public Message(int idMessage, int idUser, int idGroup, LocalDateTime sendTime,String contentText, String attachment) {
+        this.idMessage = idMessage;
+        this.idUser = idUser;
+        this.idGroup = idGroup;
+        this.contentText = contentText;
+        this.attachment = attachment;
+        this.sendTime = sendTime;
+    }
+
     public Message(int idUser, int idGroup, String contentText) {
         this.idUser = idUser;
         this.idGroup = idGroup;
         this.contentText = contentText;
     }
+
     public Message(int idUser, int idGroup, String contentText, String attachment) {
         this.idUser = idUser;
         this.idGroup = idGroup;
         this.contentText = contentText;
         this.attachment=attachment;
     }
+
+    public String getAttachment() {
+        return attachment;
+    }
+
     @Override
     public boolean send() {
         Connection con;
@@ -115,6 +131,12 @@ public class Message implements IMessage,Utils,Comparable<Message>{
             }
             if(pstmt.executeUpdate()==1){
                 con.close();
+                idMessage=-1;
+                idUser=-1;
+                idGroup=-1;
+                contentText=null;
+                attachment=null;
+                sendTime=null;
                 return true;
             }
             con.close();
@@ -139,16 +161,17 @@ public class Message implements IMessage,Utils,Comparable<Message>{
         return false;
     }
     @Override
-    public boolean edit() {
+    public boolean edit(String newContent) {
         Connection con;
         try {
             con= DriverManager.getConnection(connectionString,user,password);
             String sql = "UPDATE chat.messages SET content_text=? WHERE id_message = ?";
             PreparedStatement pstmt = con.prepareStatement(sql);
-            pstmt.setString(1,contentText);
+            pstmt.setString(1,newContent);
             pstmt.setInt(2,idMessage);
             if(pstmt.executeUpdate()==1){
                 con.close();
+                contentText=newContent;
                 return true;
             }
             con.close();
@@ -212,6 +235,25 @@ public class Message implements IMessage,Utils,Comparable<Message>{
                 '}';
     }
     public static void main(String[] args)  {
+        // In temp sunt salvate toate fisierele care vor fi in baza de date, de exemplu cand adaugam un fisier, momentan prima oara il adaugam in folder-ul
+        // temp si dupa aceia se prelucreaza... vedem daca schimbam.
+        // Fisierul ala cu de alea la intamplare, asa arata in baza de date, asa o sa ajunga si heyo
+        // Putem sa trimitem orice chestie dar dupa sa vedem cum procesam... de asta am schimbat in attachment
+        // Avem user-ul cu ID 1 si grupul cu ID 1
+        // Cream un mesaj doar cu text;
+        Message message = new Message(1,1,"heyo!!");
+        System.out.println(message);
+        message.send();// trimitem mesajul, daca se adauga cu succes atunci nu plange interpretorul si da true iar
+                        // continutul mesajului se schimba, primeste id_message si send date
+        System.out.println(message);
+        message.edit("heyo dar de data asta editat"); // editam mesajul iar daca este cu succes se schimba
+        System.out.println(message);
+        message.delete(); // stergem din baza de date si stergem continutul mesajului
+        System.out.println(message);
 
+        message = new Message(1,1,"heyo!!","heyo.jpg");
+        System.out.println(message);
+        message.send();// trimitem mesajul, daca se adauga cu succes si se schimba numele fisierului ( se garanteaza unicitatea )
+        System.out.println(message);
     }
 }
