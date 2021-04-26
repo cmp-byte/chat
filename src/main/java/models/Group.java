@@ -1,18 +1,26 @@
 package models;
 
 import com.mysql.cj.x.protobuf.MysqlxPrepare;
+import org.apache.http.HttpEntity;
+import org.apache.http.client.methods.CloseableHttpResponse;
+import org.apache.http.client.methods.HttpGet;
+import org.apache.http.impl.client.CloseableHttpClient;
+import org.apache.http.impl.client.HttpClients;
+import org.apache.http.util.EntityUtils;
 
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Scanner;
 
-public class Group implements IGroup {
+public class Group implements IGroup,Utils {
     private int idGroup = 0;
     private String title;
     private ArrayList<User> users;
     private List<Message> messages;
+    private Integer page = 0;
 
     public Group() {
         // constructor fara paramentrii , util pt testarea functiilor din clasa
@@ -29,7 +37,6 @@ public class Group implements IGroup {
         if (rs.next())
             id_group = rs.getInt("id_group");
         return id_group;
-
     }
 
     ///CONSTRUCTOR
@@ -53,8 +60,6 @@ public class Group implements IGroup {
         PreparedStatement preparedStatement = connection.prepareStatement(query);// fac un prepared statment pt ca am nev de parametru
         preparedStatement.setString(1, this.title); // primul ? va avea valoarea titlului curent
         preparedStatement.executeUpdate();// vreau sa actualizez in baza de date noua val inserata . id-ul va fi generat automat
-
-
         connection.close();
     }
 
@@ -115,6 +120,64 @@ public class Group implements IGroup {
     public void setIdGroup(int idGroup) {
         this.idGroup = idGroup;
     }
+
+
+    public boolean getMessages(int page){
+        Connection con;
+        try {
+            con= DriverManager.getConnection(connectionString,user,password);
+            Statement stmp = con.createStatement(ResultSet.TYPE_SCROLL_INSENSITIVE,ResultSet.CONCUR_READ_ONLY);
+            ResultSet rs = stmp.executeQuery("SELECT * from chat.messages where id_group="+idGroup+" ORDER BY send_date asc LIMIT 25 OFFSET "+25*page);
+            while(rs.next()){
+                Message message = new Message(rs.getInt("id_message"),
+                        rs.getInt("id_user"),
+                        rs.getInt("id_group"),
+                        rs.getTimestamp("send_date").toLocalDateTime(),
+                        rs.getString("content_text"),
+                        rs.getString("attachment")
+                );
+                if(message.getAttachment()!=null){
+                    if(!get_file(message.getAttachment())){
+                        message.setAttachment(null);
+                    }
+                }
+                messages.add(message);
+            }
+            con.close();
+            return true;
+        } catch (SQLException throwables) {
+            throwables.printStackTrace();
+            return false;
+        }
+    }
+
+    public boolean getMessages(){
+        if(this.getMessages(page)){
+            page++;
+            return true;
+        }
+        return false;
+
+    }
+
+    private static boolean get_file(String name){
+        CloseableHttpClient httpclient = HttpClients.createDefault();
+        HttpGet httpGet = new HttpGet(fileServerURL+"api/files/"+name);
+        try (CloseableHttpResponse response = httpclient.execute(httpGet)) {
+            HttpEntity responseEntity = response.getEntity();
+            byte[] array = EntityUtils.toByteArray(responseEntity);
+            try(FileOutputStream stream = new FileOutputStream("./temp/"+name)){
+                stream.write(array);
+            }
+            EntityUtils.consume(responseEntity);
+            return true;
+        } catch (IOException e) {
+            //e.printStackTrace();
+            return false;
+        }
+    }
+
+
 
     public static void main(String[] args) throws IOException, java.sql.SQLException {
         //zona de test
