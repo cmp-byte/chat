@@ -5,6 +5,7 @@ import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpDelete;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
+import org.apache.http.conn.HttpHostConnectException;
 import org.apache.http.entity.mime.MultipartEntityBuilder;
 import org.apache.http.entity.mime.content.FileBody;
 import org.apache.http.impl.client.CloseableHttpClient;
@@ -70,6 +71,7 @@ public class Message implements IMessage,Utils,Comparable<Message>{
             String attachment_name = null;
             if(!(attachment==null)){
                 attachment_name=send_file(new File("./temp/"+attachment));
+                if(attachment_name==null) return false;
                 new File("./temp/"+attachment).renameTo(new File("./temp/"+attachment_name));
             }
             if(attachment_name==null)
@@ -118,7 +120,7 @@ public class Message implements IMessage,Utils,Comparable<Message>{
             result = EntityUtils.toString(responseEntity);
             EntityUtils.consume(responseEntity);
         } catch (IOException e) {
-            e.printStackTrace();
+            //e.printStackTrace();
         }
         return result;
     }
@@ -238,6 +240,14 @@ public class Message implements IMessage,Utils,Comparable<Message>{
                 ", sendTime=" + sendTime +
                 '}';
     }
+
+    public static void main(String[] args) {
+        Message message = new Message(1,1,null,"input.png");
+        //message.send();
+        System.out.println(message);
+        System.out.println(message.send());
+    }
+    /*
     public static void main(String[] args)  {
         // In temp sunt salvate toate fisierele care vor fi in baza de date, de exemplu cand adaugam un fisier, momentan prima oara il adaugam in folder-ul
         // temp si dupa aceia se prelucreaza... vedem daca schimbam.
@@ -260,4 +270,5 @@ public class Message implements IMessage,Utils,Comparable<Message>{
         message.send();// trimitem mesajul, daca se adauga cu succes si se schimba numele fisierului ( se garanteaza unicitatea )
         System.out.println(message);
     }
+     */
 }

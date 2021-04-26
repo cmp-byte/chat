@@ -45,8 +45,8 @@ public class Group implements IGroup,Utils {
         this.users = users;
         // nu cred ca am de ce sa am o lista de mesaje in constructor din moment ce implicit va fi goala
         try {
-            if (this.users.size() >= 2)
-                this.title = this.users.get(0).getFirstName() + "_" + this.users.get(1).getFirstName();// conform cerintei titlul implicit va fi format din numele celor 2 participanti
+            if (this.users.size() >= 2);
+                //this.title = this.users.get(0).getFirstName() + "_" + this.users.get(1).getFirstName();// conform cerintei titlul implicit va fi format din numele celor 2 participanti
                 // this.users.get(0).getFirstName e echivalentul in c++ pentru un vector de genul this->Vector[0].getWhatever();
 
             else throw new Exception(); //daca vectorul nu are o dimensiune adecvata  aruncam o exceptie
@@ -94,7 +94,7 @@ public class Group implements IGroup,Utils {
         Connection connection = DriverManager.getConnection("jdbc:mysql://localhost:3306/chat", "Cmp", "1237"); //deschid conexiunea
         String query = "insert into chat.user_group (id_user,id_group) values(?,?)";
         PreparedStatement preparedStatement = connection.prepareStatement(query);
-        preparedStatement.setInt(1, user.getIdUser());
+        //preparedStatement.setInt(1, user.getIdUser());
         preparedStatement.setInt(2, this.idGroup);
         preparedStatement.executeUpdate();
         connection.close();
@@ -180,21 +180,7 @@ public class Group implements IGroup,Utils {
 
 
     public static void main(String[] args) throws IOException, java.sql.SQLException {
-        //zona de test
-        /*Group group = new Group();
-        group.setIdGroup(3);
-        group.rename();*/
-        User user1 = new User();
-        user1.setFirstName("Test");
-        User user2 = new User();
-        user2.setFirstName("Proba");
 
-        ArrayList<User> users = new ArrayList<User>();
-        users.add(user1);
-        users.add(user2);
-
-
-        Group group = new Group(users);
 
     }
 

@@ -90,6 +90,22 @@ public class User implements IUser{
         this.password = password;
     }
 
+    public int getIdUser() {
+        return idUser;
+    }
+
+    public void setIdUser(int idUser) {
+        this.idUser = idUser;
+    }
+
+    public String getLastName() {
+        return lastName;
+    }
+
+    public void setLastName(String lastName) {
+        this.lastName = lastName;
+    }
+
     @Override
     public String toString() {
         return "User{" +
