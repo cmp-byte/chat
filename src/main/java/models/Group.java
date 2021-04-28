@@ -19,7 +19,7 @@ import java.util.TreeSet;
 public class Group implements IGroup,Utils {
     private int idGroup = 0;
     private String title;
-    private ArrayList<User> users;
+    private ArrayList<User> users = new ArrayList<>();
     private TreeSet<Message> messages;
     private Integer page = 0;
     static int limit = 5; // limit per page
@@ -94,9 +94,6 @@ public class Group implements IGroup,Utils {
 
     @Override
     public boolean add(User user) throws java.sql.SQLException {
-        //Adaugam in vectorul de participanti unul nou
-        users.add(user);
-
         //Ce inseamna sa adaug inca o persoana conversatiei/grupului?
         // Inseamna sa ii crez o legatura user_group in baza de date, deci asta vom face cu aceasta functie.
         Connection connection = DriverManager.getConnection(connectionString, Utils.user, Utils.password); //deschid conexiunea
@@ -106,6 +103,8 @@ public class Group implements IGroup,Utils {
         preparedStatement.setInt(2, this.idGroup);
         preparedStatement.executeUpdate();
         connection.close();
+        //Adaugam in vectorul de participanti unul nou
+        users.add(user); // doar daca nu da eroare
         System.out.println("User adaugat cu succes!");
         return true;
     }

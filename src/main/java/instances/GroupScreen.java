@@ -26,35 +26,41 @@ public class GroupScreen {
                 System.out.println("0. Exit");
                 System.out.print("Option: ");
                 String option = new Scanner(System.in).nextLine();
-                if (option.equals("0")) {
-                    ok = false;
-                } else if (option.equals("1")) {
-                    for (Message message : group.getMessages()) {
-                        System.out.println(message.getIdUser() + ": " + message.getContentText() + " ||| attached " + message.getAttachment() + " at " + message.get_time_sent());
+                switch (option) {
+                    case "0" ->{
+                        ok=false;
                     }
-                } else if(option.equals("2")){
-                    group.getNewMessages();
-                } else if(option.equals("3")){
-                    String mesaj;
-                    System.out.print("Mesaj: ");
-                    mesaj = new Scanner(System.in).nextLine();
-                    Message message = new Message(LoggedInScreen.getUser().getIdUser(),group.getIdGroup(),mesaj);
-                    if(message.send())
-                        group.getMessages().add(message);
-                    else
-                        System.out.println("A aparut o eroare");
-                } else if(option.equals("5")){
-                    User user = new User();
-                    System.out.println("ID user: ");
-                    user.setIdUser(Integer.parseInt(new Scanner(System.in).nextLine()));
-                    try {
-                        group.add(user);
-                    } catch (SQLException throwables) {
-                        throwables.printStackTrace();
+                    case "1" -> {
+                        for (Message message : group.getMessages()) {
+                            System.out.println(message.getIdUser() + ": " + message.getContentText() + " ||| attached " + message.getAttachment() + " at " + message.get_time_sent());
+                        }
+                    }
+                    case "2" -> {
+                        group.getNewMessages();
+                    }
+                    case "3" -> {
+                        String mesaj;
+                        System.out.print("Mesaj: ");
+                        mesaj = new Scanner(System.in).nextLine();
+                        Message message = new Message(LoggedInScreen.getUser().getIdUser(), group.getIdGroup(), mesaj);
+                        if (message.send())
+                            group.getMessages().add(message);
+                        else
+                            System.out.println("A aparut o eroare");
+                    }
+                    case "5" -> {
+                        User user = new User();
+                        System.out.println("ID user: ");
+                        user.setIdUser(Integer.parseInt(new Scanner(System.in).nextLine()));
+                        try {
+                            group.add(user);
+                        } catch (SQLException throwables) {
+                            throwables.printStackTrace();
+                        }
                     }
                 }
             }
         }
-
+        GroupScreen.group = null;
     }
 }

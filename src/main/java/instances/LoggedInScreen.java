@@ -24,30 +24,48 @@ public class LoggedInScreen {
             boolean ok = true;
             while(ok){
                 System.out.println("1. View groups");
+                System.out.println("2. View Profile");
                 System.out.println("0. Exit");
                 System.out.print("Option: ");
                 String option = new Scanner(System.in).nextLine();
-                if(option.equals("1")){
-                    for(int i=0;i<groups.size();i++)
-                        System.out.println(i+" "+ groups.get(i).toString());
-                    System.out.println("-1 to exit or number of group to acces that group");
-                    option=new Scanner(System.in).nextLine();
-                    if(option.equals("-1")){
-                        return;
-                    } else {
-                        if(Integer.parseInt(option)>=0 && Integer.parseInt(option)<groups.size()){
-                            GroupScreen.setGroup(groups.get(Integer.parseInt(option)));
-                            GroupScreen.screen();
-                        } else {
-                            System.out.println("Invalid input");
+                switch(option){
+                    case "1" ->{
+                        for (int i = 0; i < groups.size(); i++)
+                            System.out.println(i + " " + groups.get(i).toString());
+                        System.out.println("-1 to exit or number of group to acces that group");
+                        while(true) {
+                            System.out.print("Option: ");
+                            String option2 = new Scanner(System.in).nextLine();
+                            if (option2.equals("-1")) {
+                                break;
+                            } else {
+                                try {
+                                    if (Integer.parseInt(option2) >= 0 && Integer.parseInt(option2) < groups.size()) {
+                                        GroupScreen.setGroup(groups.get(Integer.parseInt(option2)));
+                                        GroupScreen.screen();
+                                    } else {
+                                        System.out.println("Invalid input");
+                                    }
+                                } catch(NumberFormatException exception){
+                                    System.out.println("Invalid input");
+                                }
+                            }
                         }
                     }
-                } else if(option.equals("0")){
-                    ok=false;
-                } else{
-                    System.out.println("Invalid option");
+                    case "0" -> ok=false;
+                    case "2" -> {
+                        System.out.println("ID: "+user.getIdUser());
+                        System.out.println("Name: "+user.getFirstName()+" "+user.getLastName());
+                        System.out.println("Email: "+user.getEmail());
+                        System.out.println("Gender: "+user.getGender());
+                        System.out.println("Birthdate: "+user.getBirthDate());
+                    }
+                    default -> System.out.println("Invalid option");
                 }
+
+
             }
         }
+        LoggedInScreen.user=null;
     }
 }
