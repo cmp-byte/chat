@@ -14,16 +14,24 @@ import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Scanner;
+import java.util.TreeSet;
 
 public class Group implements IGroup,Utils {
     private int idGroup = 0;
     private String title;
     private ArrayList<User> users;
-    private List<Message> messages;
+    private TreeSet<Message> messages;
     private Integer page = 0;
+    static int limit = 5; // limit per page
 
     public Group() {
         // constructor fara paramentrii , util pt testarea functiilor din clasa
+    }
+
+    public Group(int idGroup, String title) {
+        this.idGroup = idGroup;
+        this.title = title;
+        messages = new TreeSet<>();
     }
 
     public static int getCurrentId() throws java.sql.SQLException { // in functia asta vreau sa iau id-ul maxim atribuit unui grup din baza de date
@@ -91,10 +99,10 @@ public class Group implements IGroup,Utils {
 
         //Ce inseamna sa adaug inca o persoana conversatiei/grupului?
         // Inseamna sa ii crez o legatura user_group in baza de date, deci asta vom face cu aceasta functie.
-        Connection connection = DriverManager.getConnection("jdbc:mysql://localhost:3306/chat", "Cmp", "1237"); //deschid conexiunea
+        Connection connection = DriverManager.getConnection(connectionString, Utils.user, Utils.password); //deschid conexiunea
         String query = "insert into chat.user_group (id_user,id_group) values(?,?)";
         PreparedStatement preparedStatement = connection.prepareStatement(query);
-        //preparedStatement.setInt(1, user.getIdUser());
+        preparedStatement.setInt(1, user.getIdUser());
         preparedStatement.setInt(2, this.idGroup);
         preparedStatement.executeUpdate();
         connection.close();
@@ -122,12 +130,12 @@ public class Group implements IGroup,Utils {
     }
 
 
-    public boolean getMessages(int page){
+    public boolean getNewMessages(int page){
         Connection con;
         try {
             con= DriverManager.getConnection(connectionString,user,password);
             Statement stmp = con.createStatement(ResultSet.TYPE_SCROLL_INSENSITIVE,ResultSet.CONCUR_READ_ONLY);
-            ResultSet rs = stmp.executeQuery("SELECT * from chat.messages where id_group="+idGroup+" ORDER BY send_date asc LIMIT 25 OFFSET "+25*page);
+            ResultSet rs = stmp.executeQuery("SELECT * from chat.messages where id_group="+idGroup+" ORDER BY send_date desc LIMIT "+limit+" OFFSET "+limit*page);
             while(rs.next()){
                 Message message = new Message(rs.getInt("id_message"),
                         rs.getInt("id_user"),
@@ -141,7 +149,8 @@ public class Group implements IGroup,Utils {
                         message.setAttachment(null);
                     }
                 }
-                messages.add(message);
+                if(message!=null)
+                    messages.add(message);
             }
             con.close();
             return true;
@@ -151,13 +160,12 @@ public class Group implements IGroup,Utils {
         }
     }
 
-    public boolean getMessages(){
-        if(this.getMessages(page)){
+    public boolean getNewMessages(){
+        if(this.getNewMessages(page)){
             page++;
             return true;
         }
         return false;
-
     }
 
     private static boolean get_file(String name){
@@ -177,11 +185,32 @@ public class Group implements IGroup,Utils {
         }
     }
 
+    public static ArrayList<Group> getGroups(int idUser){
+        ArrayList<Group> groups = new ArrayList<>();
+        Connection con;
+        try {
+            con= DriverManager.getConnection(connectionString,user,password);
+            Statement stmp = con.createStatement(ResultSet.TYPE_SCROLL_INSENSITIVE,ResultSet.CONCUR_READ_ONLY);
+            ResultSet rs = stmp.executeQuery("select groups.id_group,groups.title from groups join user_group on groups.id_group=user_group.id_group where id_user = "+idUser);
+            while(rs.next()){
+                Group group = new Group(rs.getInt("id_group"), rs.getString("title"));
+                groups.add(group);
+            }
+            con.close();
+            return groups;
+        } catch (SQLException throwables) {
+            throwables.printStackTrace();
+            return null;
+        }
+    }
 
+    public TreeSet<Message> getMessages() {
+        return messages;
+    }
 
-    public static void main(String[] args) throws IOException, java.sql.SQLException {
-
-
+    @Override
+    public String toString() {
+        return title + " " + idGroup;
     }
 
 }

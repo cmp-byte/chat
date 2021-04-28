@@ -1,5 +1,7 @@
 package models;
 
+import jdk.jshell.execution.Util;
+
 import java.sql.*;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
@@ -7,7 +9,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Scanner;
 
-public class User implements IUser{
+public class User implements IUser, Utils{
     private  int idUser;
     private String lastName;
     private String firstName;
@@ -37,18 +39,6 @@ public class User implements IUser{
         this.password = password;
     }
 
-    public int getIdUser() {
-        return idUser;
-    }
-
-
-    public String getLastName() {
-        return lastName;
-    }
-
-    public void setLastName(String lastName) {
-        this.lastName = lastName;
-    }
 
     public String getFirstName() {
         return firstName;
@@ -150,7 +140,28 @@ public class User implements IUser{
         int count = preparedStmt.executeUpdate();
         if (count > 0)
             insCheck=true;
+        conn.close();
+        return insCheck;
+    }
 
+
+    public static boolean my_signup(String lastName,String firstName, String email, String gender, LocalDate birthDate, String password) throws SQLException {
+        boolean insCheck=false;
+        Connection conn = null;
+        conn = DriverManager.getConnection(Utils.connectionString,Utils.user, Utils.password);
+        Statement stmt = conn.createStatement();
+        String query="insert into chat.users(last_name,first_name,email,gender,birth_date,password)" +
+                " values(?, ?, ?, ?, ?, ?)";
+        PreparedStatement preparedStmt = conn.prepareStatement(query);
+        preparedStmt.setString(1,lastName);
+        preparedStmt.setString(2,firstName);
+        preparedStmt.setString(3,email);
+        preparedStmt.setString(4,gender);
+        preparedStmt.setDate(5, Date.valueOf(birthDate));
+        preparedStmt.setString(6,password);
+        int count = preparedStmt.executeUpdate();
+        if (count > 0)
+            insCheck=true;
         conn.close();
         return insCheck;
     }
@@ -173,7 +184,28 @@ public class User implements IUser{
         }
         this.loginStatus=true;
         return loginCheck;
+    }
 
+    public static User my_login(String email, String password) throws SQLException {
+        User user = null;
+        if(email==null || password==null){
+            return user;
+        }
+        Connection conn = null;
+        conn = DriverManager.getConnection(Utils.connectionString,Utils.user, Utils.password);
+        Statement stmt = conn.createStatement();
+        String query="SELECT id_user,first_name,last_name,email,gender,birth_date FROM chat.users WHERE email="+"'"+email+"'"+"AND password="+"'"+password+"'";
+        ResultSet rs=stmt.executeQuery(query);
+        if(rs.next()) {
+            user = new User();
+            user.setIdUser(rs.getInt("id_user"));
+            user.setFirstName(rs.getString("first_name"));
+            user.setLastName(rs.getString("last_name"));
+            user.setEmail(rs.getString("email"));
+            user.setGender(rs.getString("gender"));
+            user.setBirthDate(rs.getDate("birth_date").toLocalDate());
+        }
+        return user;
     }
 
     @Override

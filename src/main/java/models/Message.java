@@ -28,6 +28,7 @@ public class Message implements IMessage,Utils,Comparable<Message>{
     private String attachment;
     private LocalDateTime sendTime;
 
+
     public Message(int idMessage, int idUser, int idGroup, LocalDateTime sendTime,String contentText, String attachment) {
         this.idMessage = idMessage;
         this.idUser = idUser;
@@ -239,6 +240,18 @@ public class Message implements IMessage,Utils,Comparable<Message>{
                 ", attachment=" + attachment +
                 ", sendTime=" + sendTime +
                 '}';
+    }
+
+    public int getIdUser() {
+        return idUser;
+    }
+
+    public String getContentText() {
+        return contentText;
+    }
+
+    public String get_time_sent() {
+        return sendTime.toString();
     }
 
     public static void main(String[] args) {
