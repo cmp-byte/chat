@@ -19,7 +19,6 @@ public class TerminalGrafic {
             System.out.println("3. Exit");
             System.out.print("Option: ");
             String optiune = new Scanner(System.in).nextLine();
-            // if in loc de switch pentru ca in Java switch-ul nu e ca in C++
             switch (optiune) {
                 case "1" -> {
                     System.out.print("Email: ");

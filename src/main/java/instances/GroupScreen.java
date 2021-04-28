@@ -23,9 +23,10 @@ public class GroupScreen {
                 System.out.println("3. Send Message without attachement");
                 System.out.println("4. Send Message with attachement");
                 System.out.println("5. Add user via id");
+                System.out.println("6. Rename group");
                 System.out.println("0. Exit");
                 System.out.print("Option: ");
-                String option = new Scanner(System.in).nextLine();
+                String option = new Scanner(System.in).next();
                 switch (option) {
                     case "0" ->{
                         ok=false;
@@ -50,13 +51,22 @@ public class GroupScreen {
                     }
                     case "5" -> {
                         User user = new User();
-                        System.out.println("ID user: ");
+                        System.out.print("ID user: ");
                         user.setIdUser(Integer.parseInt(new Scanner(System.in).nextLine()));
                         try {
                             group.add(user);
                         } catch (SQLException throwables) {
                             throwables.printStackTrace();
                         }
+                    }
+                    case "6" ->{
+                        String new_name;
+                        System.out.print("Insert new name: ");
+                        new_name=new Scanner(System.in).nextLine();
+                        if(group.my_rename(new_name))
+                            System.out.println("Succes!");
+                        else
+                            System.out.println("No succes!");
                     }
                 }
             }

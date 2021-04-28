@@ -55,14 +55,13 @@ public class Group implements IGroup,Utils {
         try {
             if (this.users.size() >= 2);
                 //this.title = this.users.get(0).getFirstName() + "_" + this.users.get(1).getFirstName();// conform cerintei titlul implicit va fi format din numele celor 2 participanti
-                // this.users.get(0).getFirstName e echivalentul in c++ pentru un vector de genul this->Vector[0].getWhatever();
+                //this.users.get(0).getFirstName e echivalentul in c++ pentru un vector de genul this->Vector[0].getWhatever();
 
             else throw new Exception(); //daca vectorul nu are o dimensiune adecvata  aruncam o exceptie
 
         } catch (Exception cmpStyleException) {
             System.out.println("Numarul de participanti pentru a crea un grup trebuie sa fie minim 2");
         }
-
         Connection connection = DriverManager.getConnection("jdbc:mysql://localhost:3306/chat", "Cmp", "1237"); //deschid conexiunea
         String query = "insert into chat.groups(title) values(?)"; // scriu query
         PreparedStatement preparedStatement = connection.prepareStatement(query);// fac un prepared statment pt ca am nev de parametru
@@ -77,9 +76,7 @@ public class Group implements IGroup,Utils {
         System.out.println("Enter new title: ");
         String s = scanner.nextLine(); //citesc noul titlu
         this.title = s; // actualizez in obiect
-
         //voi actualiza in baza de date
-
         Connection connection = DriverManager.getConnection("jdbc:mysql://localhost:3306/chat", "Cmp", "1237"); //deschid conexiunea
         String query = "update chat.groups set title = ? where id_group = ?";
         PreparedStatement preparedStatement = connection.prepareStatement(query);
@@ -88,8 +85,27 @@ public class Group implements IGroup,Utils {
         //folosesc un prepared statement , am nev de paramentrii ; in final imi va actualiza coloana title din tabel cu noua val unde PK coincide cu idGroup
         preparedStatement.executeUpdate();
         connection.close();
-
         return true;
+    }
+
+    public boolean my_rename(String title){
+        Connection connection = null; //deschid conexiunea
+        try {
+            connection = DriverManager.getConnection(Utils.connectionString, Utils.user, Utils.password);
+            String query = "update groups set title = ? where id_group = ?";
+            PreparedStatement preparedStatement = connection.prepareStatement(query);
+            preparedStatement.setString(1, title);
+            preparedStatement.setInt(2, this.idGroup);
+            if(preparedStatement.executeUpdate()>0){
+                connection.close();
+                this.title = title;
+                return true;
+            }
+            connection.close();
+        } catch (SQLException throwables) {
+            throwables.printStackTrace();
+        }
+        return false;
     }
 
     @Override
@@ -107,6 +123,39 @@ public class Group implements IGroup,Utils {
         users.add(user); // doar daca nu da eroare
         System.out.println("User adaugat cu succes!");
         return true;
+    }
+
+    public static Group create(User user1,User user2) {
+        Group group = null;
+        Connection connection = null; //deschid conexiunea
+        try {
+            connection = DriverManager.getConnection(Utils.connectionString, Utils.user, Utils.password);
+            PreparedStatement preparedStatement = connection.prepareStatement("INSERT INTO groups(title) values( (select CONCAT(last_name,' ',first_name,\" AND \", (select CONCAT(last_name,' ',first_name) from Users where id_user = ?) ) from Users where id_user = ?) )",Statement.RETURN_GENERATED_KEYS);
+            preparedStatement.setInt(1, user2.getIdUser());
+            preparedStatement.setInt(2, user1.getIdUser());
+            if(preparedStatement.executeUpdate()>0){
+                ResultSet rs = preparedStatement.getGeneratedKeys();
+                if(rs.next()){
+                    int generated_id = rs.getInt(1);
+                    preparedStatement = connection.prepareStatement("INSERT INTO user_group(id_user,id_group) values(?,?),(?,?)");
+                    preparedStatement.setInt(1,user1.getIdUser());
+                    preparedStatement.setInt(2,generated_id);
+                    preparedStatement.setInt(3,user2.getIdUser());
+                    preparedStatement.setInt(4,generated_id);
+                    if(preparedStatement.executeUpdate()>0) {
+                        group = new Group();
+                        group.idGroup = generated_id;
+                        group.title = user1.getFirstName() + " " + user1.getLastName() + " AND " + user2.getFirstName() + " " + user2.getLastName();
+                        group.users = new ArrayList<>();
+                        group.messages = new TreeSet<>();
+                        group.users.add(user1);
+                        group.users.add(user2);
+                    }
+                }
+            }
+            connection.close();
+        } catch (SQLException ignored) { ignored.printStackTrace();}
+        return group;
     }
 
     @Override

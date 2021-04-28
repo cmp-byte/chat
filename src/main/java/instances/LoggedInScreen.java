@@ -25,15 +25,16 @@ public class LoggedInScreen {
             while(ok){
                 System.out.println("1. View groups");
                 System.out.println("2. View Profile");
+                System.out.println("3. Create group");
                 System.out.println("0. Exit");
                 System.out.print("Option: ");
                 String option = new Scanner(System.in).nextLine();
                 switch(option){
                     case "1" ->{
-                        for (int i = 0; i < groups.size(); i++)
-                            System.out.println(i + " " + groups.get(i).toString());
-                        System.out.println("-1 to exit or number of group to acces that group");
                         while(true) {
+                            for (int i = 0; i < groups.size(); i++)
+                                System.out.println(i + " " + groups.get(i).toString());
+                            System.out.println("-1 to exit or number of group to acces that group");
                             System.out.print("Option: ");
                             String option2 = new Scanner(System.in).nextLine();
                             if (option2.equals("-1")) {
@@ -59,6 +60,24 @@ public class LoggedInScreen {
                         System.out.println("Email: "+user.getEmail());
                         System.out.println("Gender: "+user.getGender());
                         System.out.println("Birthdate: "+user.getBirthDate());
+                    }
+                    case "3" -> {
+                        User user2 = new User();
+                        int id;
+                        while(true){
+                            try{
+                                System.out.print("Enter ID for the User you wish to start a conversation: ");
+                                id = Integer.parseInt(new Scanner(System.in).nextLine());
+                                break;
+                            } catch(NumberFormatException exception){
+                                System.out.println("Input is wrong");
+                            }
+                        }
+                        user2.setIdUser(id);
+                        Group group = Group.create(user,user2);
+                        if(group!=null){
+                            groups.add(group);
+                        }
                     }
                     default -> System.out.println("Invalid option");
                 }
