@@ -214,9 +214,8 @@ public class User implements IUser, Utils{
         return loginStatus;
     }
 
-    @Override
     public List<User> search() throws SQLException {
-        if (!loginStatus )
+        if (!loginStatus)
             return null;
         else {
             Connection conn = null;
@@ -270,7 +269,7 @@ public class User implements IUser, Utils{
                     }
                     break;
                 case "3":
-                    System.out.println("Introduceti prenumele");
+                    System.out.println("Introduceti email");
                     String email = myObj.nextLine();  // Read user input
                     String query3 = "SELECT * FROM chat.users WHERE email=" + "'" + email + "'";
                     ResultSet rs3 = stmt.executeQuery(query3);
@@ -296,11 +295,70 @@ public class User implements IUser, Utils{
     }
 
 
-    public static void main(String[] args) throws SQLException {
+    public static List<User> my_search(String criteriu,String to_search){
+        Connection conn = null;
+        try {
+            conn = DriverManager.getConnection(Utils.connectionString, Utils.user, Utils.password);
+            Statement stmt = conn.createStatement();
+            List<User> listaUser = new ArrayList<>();
+            switch (criteriu) {
+                case "1" -> {
+                    String query = "SELECT * FROM chat.users WHERE last_name=" + "'" + to_search + "'";
+                    ResultSet rs = stmt.executeQuery(query);
+                    while (rs.next()) {
+                        int id = rs.getInt("id_user");
+                        String lastname = rs.getString("last_name");
+                        String firstname = rs.getString("first_name");
+                        String email = rs.getString("email");
+                        String gender = rs.getString("gender");
+                        LocalDate birthdate = rs.getDate("birth_date").toLocalDate();
+                        User ob = new User(id, lastname, firstname, email, gender, birthdate, null);
+                        listaUser.add(ob);
+                    }
+                }
+                case "2" -> {
+                    String query2 = "SELECT * FROM chat.users WHERE first_name=" + "'" + to_search + "'";
+                    ResultSet rs2 = stmt.executeQuery(query2);
+                    while (rs2.next()) {
+                        int id = rs2.getInt("id_user");
+                        String lastname = rs2.getString("last_name");
+                        String firstname = rs2.getString("first_name");
+                        String email = rs2.getString("email");
+                        String gender = rs2.getString("gender");
+                        LocalDate birthdate = rs2.getDate("birth_date").toLocalDate();
+                        User ob = new User(id, lastname, firstname, email, gender, birthdate, null);
+                        listaUser.add(ob);
+                    }
+                }
+                case "3" -> {
+                    String query3 = "SELECT * FROM chat.users WHERE email=" + "'" + to_search + "'";
+                    ResultSet rs3 = stmt.executeQuery(query3);
+                    while (rs3.next()) {
+                        int id = rs3.getInt("id_user");
+                        String lastname = rs3.getString("last_name");
+                        String firstname = rs3.getString("first_name");
+                        String email = rs3.getString("email");
+                        String gender = rs3.getString("gender");
+                        LocalDate birthdate = rs3.getDate("birth_date").toLocalDate();
+                        User ob = new User(id, lastname, firstname, email, gender, birthdate, null);
+                        listaUser.add(ob);
+                    }
+                }
+                default -> {
+                    return null;
+                }
 
-        User ham=new User();
-        // ham.signup();
-        // ham.login();
-        ham.search();
+            }
+            return listaUser;
+        }
+        catch(SQLException sqlException){
+            sqlException.printStackTrace();
+        }
+        return null;
+    }
+
+
+    public static void main(String[] args) throws SQLException {
+        System.out.println(my_search("2","bb"));
     }
 }

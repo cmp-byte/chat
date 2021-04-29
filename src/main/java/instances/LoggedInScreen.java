@@ -4,6 +4,7 @@ import models.Group;
 import models.User;
 
 import java.util.ArrayList;
+import java.util.List;
 import java.util.Scanner;
 
 public class LoggedInScreen {
@@ -12,7 +13,6 @@ public class LoggedInScreen {
 
     public static void setUser(User user) {
         LoggedInScreen.user = user;
-        groups = Group.getGroups(user.getIdUser());
     }
 
     public static User getUser() {
@@ -26,12 +26,14 @@ public class LoggedInScreen {
                 System.out.println("1. View groups");
                 System.out.println("2. View Profile");
                 System.out.println("3. Create group");
+                System.out.println("4. Search User");
                 System.out.println("0. Exit");
                 System.out.print("Option: ");
                 String option = new Scanner(System.in).nextLine();
                 switch(option){
                     case "1" ->{
                         while(true) {
+                            groups = Group.getGroups(user.getIdUser());
                             for (int i = 0; i < groups.size(); i++)
                                 System.out.println(i + " " + groups.get(i).toString());
                             System.out.println("-1 to exit or number of group to acces that group");
@@ -79,6 +81,21 @@ public class LoggedInScreen {
                             groups.add(group);
                         }
                     }
+                    case "4" ->{
+                        System.out.print("Search by: 1(last_name),2(first_name),3(email)");
+                        String criteriu = new Scanner(System.in).nextLine();
+                        System.out.print("What to search: ");
+                        List<User> users = User.my_search(criteriu,new Scanner(System.in).nextLine());
+                        if(users!=null){
+                            System.out.println("Found "+users.size()+" results");
+                            for(int i=0;i<users.size();i++){
+                                System.out.println(users.get(i).getIdUser()+" "+users.get(i).getFirstName()+" "+users.get(i).getLastName()+" "+users.get(i).getEmail());
+                            }
+                        } else {
+                            System.out.println("There was an error.");
+                        }
+
+                    }
                     default -> System.out.println("Invalid option");
                 }
 
@@ -87,4 +104,5 @@ public class LoggedInScreen {
         }
         LoggedInScreen.user=null;
     }
+
 }
