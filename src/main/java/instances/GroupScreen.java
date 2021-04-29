@@ -20,10 +20,11 @@ public class GroupScreen {
             while(ok) {
                 System.out.println("1. View messages");
                 System.out.println("2. Get more messages");
-                System.out.println("3. Send Message without attachement");
-                System.out.println("4. Send Message with attachement");
-                System.out.println("5. Add user via id");
-                System.out.println("6. Rename group");
+                System.out.println("3. Get newest messages");
+                System.out.println("4. Send Message without attachement");
+                System.out.println("5. Send Message with attachement");
+                System.out.println("6. Add user via id");
+                System.out.println("7. Rename group");
                 System.out.println("0. Exit");
                 System.out.print("Option: ");
                 String option = new Scanner(System.in).next();
@@ -39,7 +40,10 @@ public class GroupScreen {
                     case "2" -> {
                         group.getNewMessages();
                     }
-                    case "3" -> {
+                    case "3" ->{
+                        group.getNewestMessages();
+                    }
+                    case "4" -> {
                         String mesaj;
                         System.out.print("Mesaj: ");
                         mesaj = new Scanner(System.in).nextLine();
@@ -49,7 +53,7 @@ public class GroupScreen {
                         else
                             System.out.println("A aparut o eroare");
                     }
-                    case "5" -> {
+                    case "6" -> {
                         User user = new User();
                         System.out.print("ID user: ");
                         user.setIdUser(Integer.parseInt(new Scanner(System.in).nextLine()));
@@ -59,7 +63,7 @@ public class GroupScreen {
                             throwables.printStackTrace();
                         }
                     }
-                    case "6" ->{
+                    case "7" ->{
                         String new_name;
                         System.out.print("Insert new name: ");
                         new_name=new Scanner(System.in).nextLine();

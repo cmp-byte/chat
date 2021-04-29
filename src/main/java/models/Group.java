@@ -11,6 +11,11 @@ import org.apache.http.util.EntityUtils;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.sql.*;
+import java.time.Instant;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Scanner;
@@ -23,6 +28,7 @@ public class Group implements IGroup,Utils {
     private TreeSet<Message> messages;
     private Integer page = 0;
     static int limit = 5; // limit per page
+    Long last_search;
 
     public Group() {
         // constructor fara paramentrii , util pt testarea functiilor din clasa
@@ -179,6 +185,9 @@ public class Group implements IGroup,Utils {
 
 
     public boolean getNewMessages(int page){
+        if(page==0){
+            last_search=System.currentTimeMillis();
+        }
         Connection con;
         try {
             con= DriverManager.getConnection(connectionString,user,password);
@@ -214,6 +223,40 @@ public class Group implements IGroup,Utils {
             return true;
         }
         return false;
+    }
+
+    public boolean getNewestMessages(){
+        if(last_search==null){
+            return getNewMessages(0);
+        }
+        Connection con;
+        try {
+            con= DriverManager.getConnection(connectionString,user,password);
+            Statement stmp = con.createStatement(ResultSet.TYPE_SCROLL_INSENSITIVE,ResultSet.CONCUR_READ_ONLY);
+            ResultSet rs = stmp.executeQuery("SELECT * from chat.messages where id_group="+idGroup+" and send_date>='"+print_date_time_in_ms(last_search,"YYYY-MM-d HH:mm:ss.SSSS") +"' ORDER BY send_date desc" );
+            while(rs.next()){
+                Message message = new Message(rs.getInt("id_message"),
+                        rs.getInt("id_user"),
+                        rs.getInt("id_group"),
+                        rs.getTimestamp("send_date").toLocalDateTime(),
+                        rs.getString("content_text"),
+                        rs.getString("attachment")
+                );
+                if(message.getAttachment()!=null){
+                    if(!get_file(message.getAttachment())){
+                        message.setAttachment(null);
+                    }
+                }
+                if(message!=null)
+                    messages.add(message);
+            }
+            con.close();
+            last_search=System.currentTimeMillis();
+            return true;
+        } catch (SQLException throwables) {
+            throwables.printStackTrace();
+            return false;
+        }
     }
 
     private static boolean get_file(String name){
@@ -259,6 +302,35 @@ public class Group implements IGroup,Utils {
     @Override
     public String toString() {
         return title + " " + idGroup;
+    }
+
+
+    private static LocalDateTime get_date_time_in_ms(String zone,long data){
+        Instant instant = Instant.ofEpochMilli(data);
+        ZonedDateTime utcZoned = instant.atZone(ZoneId.of("UTC"));
+        ZonedDateTime ldtZoned = utcZoned.withZoneSameInstant(ZoneId.systemDefault());
+        LocalDateTime ldt = ldtZoned.toLocalDateTime();
+        return ldt;
+    }
+    private static LocalDateTime get_date_time_in_ms(long data){
+        Instant instant = Instant.ofEpochMilli(data);
+        ZonedDateTime utcZoned = instant.atZone(ZoneId.systemDefault());
+        ZonedDateTime ldtZoned = utcZoned.withZoneSameInstant(ZoneId.systemDefault());
+        LocalDateTime ldt = ldtZoned.toLocalDateTime();
+        return ldt;
+    }
+
+    private static String print_date_time_in_ms(String zone,long data,String pattern){
+        // Patern form: dd-MM-yyyy
+        LocalDateTime ldt = get_date_time_in_ms(zone,data);
+        String str = ldt.format(DateTimeFormatter.ofPattern(pattern));
+        return str;
+    }
+    private static String print_date_time_in_ms(long data,String pattern){
+        // Patern form: dd-MM-yyyy
+        LocalDateTime ldt = get_date_time_in_ms(data);
+        String str = ldt.format(DateTimeFormatter.ofPattern(pattern));
+        return str;
     }
 
 }
