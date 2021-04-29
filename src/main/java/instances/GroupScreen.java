@@ -12,7 +12,7 @@ public class GroupScreen {
 
     public static void setGroup(Group group) {
         GroupScreen.group = group;
-        group.getNewMessages(0);
+        group.getOlderMessages();
     }
     public static void screen(){
         if(group!=null){
@@ -38,7 +38,7 @@ public class GroupScreen {
                         }
                     }
                     case "2" -> {
-                        group.getNewMessages();
+                        group.getOlderMessages();
                     }
                     case "3" ->{
                         group.getNewestMessages();

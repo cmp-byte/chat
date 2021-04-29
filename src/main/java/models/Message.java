@@ -254,6 +254,10 @@ public class Message implements IMessage,Utils,Comparable<Message>{
         return sendTime.toString();
     }
 
+    public LocalDateTime getSendTime() {
+        return sendTime;
+    }
+
     public static void main(String[] args) {
         Message message = new Message(1,1,null,"input.png");
         //message.send();

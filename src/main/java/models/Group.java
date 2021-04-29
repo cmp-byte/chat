@@ -184,6 +184,7 @@ public class Group implements IGroup,Utils {
     }
 
 
+    /*
     public boolean getNewMessages(int page){
         if(page==0){
             last_search=System.currentTimeMillis();
@@ -224,10 +225,50 @@ public class Group implements IGroup,Utils {
         }
         return false;
     }
+    */
+
+    public boolean getOlderMessages(){
+        long search;
+        if(messages==null || messages.size()==0){
+            search = System.currentTimeMillis();
+            last_search = search;
+        } else {
+            Instant instant = messages.last().getSendTime().atZone(ZoneId.systemDefault()).toInstant();
+            search = instant.toEpochMilli();
+        }
+        Connection con;
+        try {
+            con= DriverManager.getConnection(connectionString,user,password);
+            Statement stmp = con.createStatement(ResultSet.TYPE_SCROLL_INSENSITIVE,ResultSet.CONCUR_READ_ONLY);
+            ResultSet rs = stmp.executeQuery("SELECT * from chat.messages where id_group="+idGroup+" and send_date<='"+print_date_time_in_ms(search,"YYYY-MM-d HH:mm:ss.SSSS") +"' ORDER BY send_date desc" );
+            while(rs.next()){
+                Message message = new Message(rs.getInt("id_message"),
+                        rs.getInt("id_user"),
+                        rs.getInt("id_group"),
+                        rs.getTimestamp("send_date").toLocalDateTime(),
+                        rs.getString("content_text"),
+                        rs.getString("attachment")
+                );
+                if(message.getAttachment()!=null){
+                    if(!get_file(message.getAttachment())){
+                        message.setAttachment(null);
+                    }
+                }
+                if(message!=null)
+                    messages.add(message);
+            }
+            con.close();
+            last_search=System.currentTimeMillis();
+            return true;
+        } catch (SQLException throwables) {
+            throwables.printStackTrace();
+            return false;
+        }
+    }
 
     public boolean getNewestMessages(){
         if(last_search==null){
-            return getNewMessages(0);
+            return getOlderMessages();
         }
         Connection con;
         try {
