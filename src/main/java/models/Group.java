@@ -26,8 +26,8 @@ public class Group implements IGroup,Utils {
     private String title;
     private ArrayList<User> users = new ArrayList<>();
     private TreeSet<Message> messages;
-    private Integer page = 0;
-    static int limit = 5; // limit per page
+    //private Integer page = 0;
+    //static int limit = 5; // limit per page
     Long last_search;
 
     public Group() {
