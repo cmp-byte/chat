@@ -9,7 +9,7 @@ import java.util.Scanner;
 
 public class LoggedInScreen {
     static User user;
-    static ArrayList<Group> groups;
+    static ArrayList<Group> groups = new ArrayList<>();
 
     public static void setUser(User user) {
         LoggedInScreen.user = user;
@@ -77,9 +77,6 @@ public class LoggedInScreen {
                         }
                         user2.setIdUser(id);
                         Group group = Group.create(user,user2);
-                        if(group!=null){
-                            groups.add(group);
-                        }
                     }
                     case "4" ->{
                         System.out.print("Search by: 1(last_name),2(first_name),3(email)");
