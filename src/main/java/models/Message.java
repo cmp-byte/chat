@@ -246,7 +246,7 @@ public class Message implements IMessage,Utils,Comparable<Message>{
     }
 
     public String getContentText() {
-        return contentText;
+        return idUser+": "+contentText;
     }
 
     public String get_time_sent() {
@@ -256,6 +256,7 @@ public class Message implements IMessage,Utils,Comparable<Message>{
     public LocalDateTime getSendTime() {
         return sendTime;
     }
+
 
     public static void main(String[] args) {
         Message message = new Message(1,1,null,"input.png");

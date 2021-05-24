@@ -357,6 +357,13 @@ public class User implements IUser, Utils{
         return null;
     }
 
+    public String getCompleteName(){
+        return firstName+" "+lastName;
+    }
+    public String getCompleteSearch(){
+        return firstName+" "+lastName+" "+email;
+    }
+
 
     public static void main(String[] args) throws SQLException {
         System.out.println(my_search("2","bb"));
