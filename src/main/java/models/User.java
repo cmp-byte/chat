@@ -194,7 +194,7 @@ public class User implements IUser, Utils{
         Connection conn = null;
         conn = DriverManager.getConnection(Utils.connectionString,Utils.user, Utils.password);
         Statement stmt = conn.createStatement();
-        String query="SELECT id_user,first_name,last_name,email,gender,birth_date FROM chat.users WHERE email="+"'"+email+"'"+"AND password="+"'"+password+"'";
+        String query="SELECT id_user,first_name,last_name,email,gender,birth_date FROM   users WHERE email="+"'"+email+"'"+"AND password="+"'"+password+"'";
         ResultSet rs=stmt.executeQuery(query);
         if(rs.next()) {
             user = new User();
@@ -233,7 +233,7 @@ public class User implements IUser, Utils{
                 case "1":
                     System.out.println("Introduceti numele");
                     String lastName = myObj.nextLine();  // Read user input
-                    String query = "SELECT * FROM chat.users WHERE last_name=" + "'" + lastName + "'";
+                    String query = "SELECT * FROM   users WHERE last_name=" + "'" + lastName + "'";
                     ResultSet rs = stmt.executeQuery(query);
                     while (rs.next()) {
                         int id = rs.getInt(1);
@@ -252,7 +252,7 @@ public class User implements IUser, Utils{
                 case "2":
                     System.out.println("Introduceti prenumele");
                     String firstName = myObj.nextLine();  // Read user input
-                    String query2 = "SELECT * FROM chat.users WHERE first_name=" + "'" + firstName + "'";
+                    String query2 = "SELECT * FROM   users WHERE first_name=" + "'" + firstName + "'";
                     ResultSet rs2 = stmt.executeQuery(query2);
                     while (rs2.next()) {
                         int id = rs2.getInt(1);
@@ -271,7 +271,7 @@ public class User implements IUser, Utils{
                 case "3":
                     System.out.println("Introduceti email");
                     String email = myObj.nextLine();  // Read user input
-                    String query3 = "SELECT * FROM chat.users WHERE email=" + "'" + email + "'";
+                    String query3 = "SELECT * FROM   users WHERE email=" + "'" + email + "'";
                     ResultSet rs3 = stmt.executeQuery(query3);
                     while (rs3.next()) {
                         int id = rs3.getInt(1);
@@ -303,7 +303,7 @@ public class User implements IUser, Utils{
             List<User> listaUser = new ArrayList<>();
             switch (criteriu) {
                 case "1" -> {
-                    String query = "SELECT * FROM chat.users WHERE last_name=" + "'" + to_search + "'";
+                    String query = "SELECT * FROM   users WHERE last_name=" + "'" + to_search + "'";
                     ResultSet rs = stmt.executeQuery(query);
                     while (rs.next()) {
                         int id = rs.getInt("id_user");
@@ -317,7 +317,7 @@ public class User implements IUser, Utils{
                     }
                 }
                 case "2" -> {
-                    String query2 = "SELECT * FROM chat.users WHERE first_name=" + "'" + to_search + "'";
+                    String query2 = "SELECT * FROM   users WHERE first_name=" + "'" + to_search + "'";
                     ResultSet rs2 = stmt.executeQuery(query2);
                     while (rs2.next()) {
                         int id = rs2.getInt("id_user");
@@ -331,7 +331,7 @@ public class User implements IUser, Utils{
                     }
                 }
                 case "3" -> {
-                    String query3 = "SELECT * FROM chat.users WHERE email=" + "'" + to_search + "'";
+                    String query3 = "SELECT * FROM   users WHERE email=" + "'" + to_search + "'";
                     ResultSet rs3 = stmt.executeQuery(query3);
                     while (rs3.next()) {
                         int id = rs3.getInt("id_user");

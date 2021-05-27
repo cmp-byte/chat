@@ -257,7 +257,6 @@ public class EcranLogat {
             public void actionPerformed(ActionEvent e) {
                 for (Enumeration<AbstractButton> buttons = buttonGroup.getElements(); buttons.hasMoreElements();) {
                     AbstractButton button = buttons.nextElement();
-                    System.out.println("da");
                     if (button.isSelected()) {
                         java.util.List<User> users = null;
                         if(button.getText().equals("First Name")){

@@ -23,6 +23,7 @@ public class Group implements IGroup,Utils {
     private String title;
     private ArrayList<User> users = new ArrayList<>();
     private TreeSet<Message> messages = new TreeSet<>();
+    private TreeSet<Message2> messages2 = new TreeSet<>();
     //private Integer page = 0;
     //static int limit = 5; // limit per page
     Long last_search;
@@ -139,7 +140,7 @@ public class Group implements IGroup,Utils {
         //Ce inseamna sa adaug inca o persoana conversatiei/grupului?
         // Inseamna sa ii crez o legatura user_group in baza de date, deci asta vom face cu aceasta functie.
         Connection connection = DriverManager.getConnection(connectionString, Utils.user, Utils.password); //deschid conexiunea
-        String query = "insert into chat.user_group (id_user,id_group) values(?,?)";
+        String query = "insert into user_group (id_user,id_group) values(?,?)";
         PreparedStatement preparedStatement = connection.prepareStatement(query);
         preparedStatement.setInt(1, user.getIdUser());
         preparedStatement.setInt(2, this.idGroup);
@@ -163,6 +164,7 @@ public class Group implements IGroup,Utils {
                 ResultSet rs = preparedStatement.getGeneratedKeys();
                 if(rs.next()){
                     int generated_id = rs.getInt(1);
+                    System.out.println(generated_id);
                     preparedStatement = connection.prepareStatement("INSERT INTO user_group(id_user,id_group) values(?,?),(?,?)");
                     preparedStatement.setInt(1,user1.getIdUser());
                     preparedStatement.setInt(2,generated_id);
@@ -171,7 +173,7 @@ public class Group implements IGroup,Utils {
                     if(preparedStatement.executeUpdate()>0) {
                         group = new Group();
                         group.idGroup = generated_id;
-                        group.title = user1.getFirstName() + " " + user1.getLastName() + " AND " + user2.getFirstName() + " " + user2.getLastName();
+                        group.title = user1.getLastName() + " " + user1.getFirstName()  + " AND " + user2.getLastName() + " " + user2.getFirstName();
                         group.users = new ArrayList<>();
                         group.messages = new TreeSet<>();
                         group.users.add(user1);
@@ -187,7 +189,7 @@ public class Group implements IGroup,Utils {
     @Override
     public boolean delete() throws java.sql.SQLException {
         Connection connection = DriverManager.getConnection("jdbc:mysql://localhost:3306/chat", "Cmp", "1237"); //deschid conexiunea
-        String query = "delete from chat.groups where id_group=?";
+        String query = "delete from groups where id_group=?";
         PreparedStatement preparedStatement = connection.prepareStatement(query);
         preparedStatement.setInt(1, this.idGroup);
         connection.close();
@@ -261,7 +263,7 @@ public class Group implements IGroup,Utils {
         try {
             con= DriverManager.getConnection(connectionString,user,password);
             Statement stmp = con.createStatement(ResultSet.TYPE_SCROLL_INSENSITIVE,ResultSet.CONCUR_READ_ONLY);
-            ResultSet rs = stmp.executeQuery("SELECT * from chat.messages where id_group="+idGroup+" and send_date<='"+print_date_time_in_ms(search,"YYYY-MM-d HH:mm:ss.SSSS") +"' ORDER BY send_date desc LIMIT 5" );
+            ResultSet rs = stmp.executeQuery("SELECT * from messages where id_group="+idGroup+" and send_date<='"+print_date_time_in_ms(search,"YYYY-MM-d HH:mm:ss.SSSS") +"' ORDER BY send_date desc LIMIT 5" );
             while(rs.next()){
                 Message message = new Message(rs.getInt("id_message"),
                         rs.getInt("id_user"),
@@ -287,40 +289,123 @@ public class Group implements IGroup,Utils {
         return null;
     }
 
-    public ArrayList<Message> getNewestMessages(){
-        if(last_search==null){
-            return getOlderMessages();
+    public ArrayList<Message2> getOlderMessages2(){
+        long search;
+        if(messages2==null || messages2.size()==0){
+            search = System.currentTimeMillis();
+            last_search = search;
+        } else {
+            Instant instant = messages2.first().getSendTime().atZone(ZoneId.systemDefault()).toInstant();
+            search = instant.toEpochMilli();
         }
         Connection con;
-        ArrayList<Message> messagesReturned = new ArrayList<>();
+        ArrayList<Message2> messagesReturned = new ArrayList<>();
         try {
             con= DriverManager.getConnection(connectionString,user,password);
             Statement stmp = con.createStatement(ResultSet.TYPE_SCROLL_INSENSITIVE,ResultSet.CONCUR_READ_ONLY);
-            ResultSet rs = stmp.executeQuery("SELECT * from chat.messages where id_group="+idGroup+" and send_date>='"+print_date_time_in_ms(last_search,"YYYY-MM-d HH:mm:ss.SSSS") +"' ORDER BY send_date desc" );
+            ResultSet rs = stmp.executeQuery("SELECT * from messages where id_group="+idGroup+" and send_date<='"+print_date_time_in_ms(search,"YYYY-MM-d HH:mm:ss.SSSS") +"' ORDER BY send_date desc LIMIT 5" );
             while(rs.next()){
-                Message message = new Message(rs.getInt("id_message"),
-                        rs.getInt("id_user"),
-                        rs.getInt("id_group"),
-                        rs.getTimestamp("send_date").toLocalDateTime(),
-                        rs.getString("content_text"),
-                        rs.getString("attachment")
-                );
-                if(message.getAttachment()!=null){
-                    if(!get_file(message.getAttachment())){
-                        message.setAttachment(null);
-                    }
+                int id_message = rs.getInt("id_message");
+                int id_user = rs.getInt("id_user");
+                int id_group = rs.getInt("id_group");
+                LocalDateTime localDateTime = rs.getTimestamp("send_date").toLocalDateTime();
+                String content_text = rs.getString("content_text");
+                String attachment = rs.getString("attachment");
+                Message2 message = null;
+                if(attachment!=null){
+                    message = new Message2Complex(id_message,id_user,id_group,localDateTime,content_text,attachment);
+                } else{
+                    message = new Message2(id_message,id_user,id_group,localDateTime,content_text);
                 }
                 messagesReturned.add(message);
-                messages.add(message);
+                messages2.add(message);
             }
             con.close();
             last_search=System.currentTimeMillis();
+            messagesReturned.sort(Message2::compareTo);
             return messagesReturned;
         } catch (SQLException throwables) {
             throwables.printStackTrace();
-
         }
         return null;
+    }
+
+    public ArrayList<Message> getNewestMessages(){
+        synchronized (Utils.connectionString) {
+            if (last_search == null) {
+                return getOlderMessages();
+            }
+            Connection con;
+            ArrayList<Message> messagesReturned = new ArrayList<>();
+            try {
+                con = DriverManager.getConnection(connectionString, user, password);
+                Statement stmp = con.createStatement(ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_READ_ONLY);
+                ResultSet rs = stmp.executeQuery("SELECT * from messages where id_group=" + idGroup + " and send_date>='" + print_date_time_in_ms(last_search, "YYYY-MM-d HH:mm:ss.SSSS") + "' ORDER BY send_date desc");
+                while (rs.next()) {
+                    Message message = new Message(rs.getInt("id_message"),
+                            rs.getInt("id_user"),
+                            rs.getInt("id_group"),
+                            rs.getTimestamp("send_date").toLocalDateTime(),
+                            rs.getString("content_text"),
+                            rs.getString("attachment")
+                    );
+                    if (message.getAttachment() != null) {
+                        if (!get_file(message.getAttachment())) {
+                            message.setAttachment(null);
+                        }
+                    }
+                    messagesReturned.add(message);
+                    messages.add(message);
+                }
+                con.close();
+                last_search = System.currentTimeMillis();
+                return messagesReturned;
+            } catch (SQLException throwables) {
+                throwables.printStackTrace();
+
+            }
+            return null;
+        }
+    }
+
+    public ArrayList<Message2> getNewestMessages2(){
+        synchronized (Utils.connectionString) {
+            if (last_search == null) {
+                return getOlderMessages2();
+            }
+            Connection con;
+            ArrayList<Message2> messagesReturned = new ArrayList<>();
+            try {
+                con = DriverManager.getConnection(connectionString, user, password);
+                Statement stmp = con.createStatement(ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_READ_ONLY);
+                ResultSet rs = stmp.executeQuery("SELECT * from messages where id_group=" + idGroup + " and send_date>='" + print_date_time_in_ms(last_search, "YYYY-MM-d HH:mm:ss.SSSS") + "' ORDER BY send_date desc");
+                while (rs.next()) {
+                    int id_message = rs.getInt("id_message");
+                    int id_user = rs.getInt("id_user");
+                    int id_group = rs.getInt("id_group");
+                    LocalDateTime localDateTime = rs.getTimestamp("send_date").toLocalDateTime();
+                    String content_text = rs.getString("content_text");
+                    String attachment = rs.getString("attachment");
+                    Message2 message = null;
+                    if(attachment!=null){
+                        message = new Message2Complex(id_message,id_user,id_group,localDateTime,content_text,attachment);
+                    } else{
+                        message = new Message2(id_message,id_user,id_group,localDateTime,content_text);
+                    }
+                    messagesReturned.add(message);
+                    messages2.add(message);
+
+                }
+                con.close();
+                last_search = System.currentTimeMillis();
+                messagesReturned.sort(Message2::compareTo);
+                return messagesReturned;
+            } catch (SQLException throwables) {
+                throwables.printStackTrace();
+
+            }
+            return null;
+        }
     }
 
     private static boolean get_file(String name){
@@ -340,24 +425,30 @@ public class Group implements IGroup,Utils {
         }
     }
 
+
     public static ArrayList<Group> getGroups(int idUser){
-        ArrayList<Group> groups = new ArrayList<>();
-        Connection con;
-        try {
-            con= DriverManager.getConnection(connectionString,user,password);
-            Statement stmp = con.createStatement(ResultSet.TYPE_SCROLL_INSENSITIVE,ResultSet.CONCUR_READ_ONLY);
-            ResultSet rs = stmp.executeQuery("select groups.id_group,groups.title from groups join user_group on groups.id_group=user_group.id_group where id_user = "+idUser);
-            while(rs.next()){
-                Group group = new Group(rs.getInt("id_group"), rs.getString("title"));
-                groups.add(group);
+        synchronized (Utils.connectionString) {
+            System.out.println("1");
+            ArrayList<Group> groups = new ArrayList<>();
+            Connection con;
+            try {
+                con = DriverManager.getConnection(connectionString, user, password);
+                Statement stmp = con.createStatement(ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_READ_ONLY);
+                ResultSet rs = stmp.executeQuery("select groups.id_group,groups.title from groups join user_group on groups.id_group=user_group.id_group where id_user = " + idUser);
+                while (rs.next()) {
+                    Group group = new Group(rs.getInt("id_group"), rs.getString("title"));
+                    groups.add(group);
+                }
+                con.close();
+                return groups;
+            } catch (SQLException throwables) {
+                throwables.printStackTrace();
+                return null;
             }
-            con.close();
-            return groups;
-        } catch (SQLException throwables) {
-            throwables.printStackTrace();
-            return null;
         }
     }
+
+
 
     public TreeSet<Message> getMessages() {
         return messages;
@@ -444,5 +535,19 @@ public class Group implements IGroup,Utils {
         }
         String nume= users.stream().filter(i->i.getIdUser()==Integer.parseInt(cuvinte[0])).map(User::getCompleteName).collect(Collectors.joining(","));
         return nume+": "+cuvinte[1];
+    }
+
+
+    public String getContentText(Message2 entered) {
+        String [] cuvinte = entered.getContentText().split(":",2);
+        if(users==null || users.stream().count()==0 || users.stream().map(User::getIdUser).collect(Collectors.toList()).contains(Integer.parseInt(cuvinte[0]))){
+            this.get_users();
+        }
+        String nume= users.stream().filter(i->i.getIdUser()==Integer.parseInt(cuvinte[0])).map(User::getCompleteName).collect(Collectors.joining(","));
+        return nume+": "+cuvinte[1];
+    }
+
+    public TreeSet<Message2> getMessages2() {
+        return messages2;
     }
 }
