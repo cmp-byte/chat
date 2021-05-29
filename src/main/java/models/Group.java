@@ -543,7 +543,10 @@ public class Group implements IGroup,Utils {
         if(users==null || users.stream().count()==0 || users.stream().map(User::getIdUser).collect(Collectors.toList()).contains(Integer.parseInt(cuvinte[0]))){
             this.get_users();
         }
-        String nume= users.stream().filter(i->i.getIdUser()==Integer.parseInt(cuvinte[0])).map(User::getCompleteName).collect(Collectors.joining(","));
+        String nume= users.stream().filter(i->i.getIdUser()==Integer.parseInt(cuvinte[0])).limit(1).map(User::getCompleteName).collect(Collectors.joining(","));
+        if(nume.length()==0){
+            nume = "Non participant user:";
+        }
         return nume+": "+cuvinte[1];
     }
 

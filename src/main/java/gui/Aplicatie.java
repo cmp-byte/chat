@@ -2,21 +2,26 @@ package gui;
 
 import models.*;
 
-import javax.lang.model.type.ArrayType;
+import javax.mail.*;
+import javax.mail.internet.InternetAddress;
+import javax.mail.internet.MimeBodyPart;
+import javax.mail.internet.MimeMessage;
+import javax.sql.DataSource;
 import javax.swing.*;
 import javax.swing.border.TitledBorder;
-import javax.swing.colorchooser.AbstractColorChooserPanel;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import java.awt.*;
 import java.awt.event.*;
 import java.io.File;
-import java.sql.SQLException;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.sql.*;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
-import java.util.Enumeration;
-import java.util.Objects;
+import java.util.*;
 import java.util.stream.Collectors;
 
 public class Aplicatie {
@@ -109,23 +114,36 @@ public class Aplicatie {
                 changed();
             }
             public void changed() {
-                if (textPassword.getText().equals("") || textEmail.getText().equals("")){
-                    buttonLogin.setEnabled(false);
-                }
-                else {
-                    buttonLogin.setEnabled(true);
-                }
+                buttonLogin.setEnabled(!textPassword.getText().equals("") && Utils.match_mail(textEmail.getText()));
+
+            }
+        });
+        textEmail.getDocument().addDocumentListener(new DocumentListener() {
+            public void changedUpdate(DocumentEvent e) {
+                changed();
+            }
+            public void removeUpdate(DocumentEvent e) {
+                changed();
+            }
+            public void insertUpdate(DocumentEvent e) {
+                changed();
+            }
+            public void changed() {
+                buttonLogin.setEnabled(!textPassword.getText().equals("") && Utils.match_mail(textEmail.getText()));
 
             }
         });
         jPanel.add(buttonLogin,gridBagConstraints);
-
-
-
         gridBagConstraints.gridx=2;
         gridBagConstraints.gridy=3;
-        jPanel.add(new JButton("Forget Password"),gridBagConstraints);
-
+        JButton buttonForgetPassword = new JButton("Forgot Password");
+        jPanel.add(buttonForgetPassword,gridBagConstraints);
+        buttonForgetPassword.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                getForgotPassword();
+            }
+        });
         gridBagConstraints.gridx=0;
         gridBagConstraints.gridy=3;
         JButton jButton = new JButton("Create new account");
@@ -136,11 +154,7 @@ public class Aplicatie {
             }
         });
         jPanel.add(jButton,gridBagConstraints);
-
         gridBagConstraints.gridwidth=1;
-
-
-
         fereastra.setContentPane(jPanel);
 
     }
@@ -194,7 +208,6 @@ public class Aplicatie {
             public void mousePressed(MouseEvent e) {
                 if ( SwingUtilities.isRightMouseButton(e) ) {
                     jList.setSelectedIndex(jList.locationToIndex(e.getPoint()));
-
                     JPopupMenu menu = new JPopupMenu();
                     JMenuItem itemDelete = new JMenuItem("Delete Group");
                     itemDelete.addActionListener(new ActionListener() {
@@ -387,10 +400,72 @@ public class Aplicatie {
                         }
                     });
 
+                    JMenuItem itemExport = new JMenuItem("Export messages");
+                    itemExport.addActionListener(new ActionListener() {
+                        @Override
+                        public void actionPerformed(ActionEvent e) {
+                            JFileChooser chooser = new JFileChooser();
+                            chooser.setCurrentDirectory(new java.io.File("."));
+                            chooser.setDialogTitle("Select title");
+                            chooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
+                            //
+                            // disable the "All files" option.
+                            //
+                            chooser.setAcceptAllFileFilterUsed(false);
+                            //
+                            if (chooser.showOpenDialog(jPanel) == JFileChooser.APPROVE_OPTION) {
+                                System.out.println("getCurrentDirectory(): "
+                                        +  chooser.getCurrentDirectory());
+                                System.out.println("getSelectedFile() : "
+                                        +  chooser.getSelectedFile());
+                                Group group = new Group(groups.get(jList.getSelectedIndex()).getIdGroup(),groups.get(jList.getSelectedIndex()).getTitle());
+                                group.getNewestMessages2();
+                                while(group.getOlderMessages2().stream().count()>0){
+
+                                }
+                                try {
+                                    String directory = chooser.getSelectedFile() +"\\"+group.getTitle().replace(' ','_');
+                                    System.out.println(chooser.getSelectedFile() +"\\"+group.getTitle().replace(' ','_')+"_"+System.currentTimeMillis()+"\\"+"chat_at_"+System.currentTimeMillis()+".txt");
+                                    File file = new File(directory);
+                                    file.mkdir();
+                                    file = new File(directory+"\\"+"chat_at_"+System.currentTimeMillis()+".txt");
+                                    file.createNewFile();
+                                    System.out.println(group.getMessages2().stream().count());
+                                    FileWriter fileWriter = new FileWriter(file);
+                                    for(Message2 message2: group.getMessages2()){
+                                        fileWriter.write(group.getContentText(message2));
+                                        fileWriter.write(" at " +message2.getSendTime());
+                                        fileWriter.write("\n");
+                                        if(message2 instanceof Message2Complex)
+                                            ((Message2Complex) message2).get_file(directory);
+                                    }
+                                    fileWriter.flush();
+                                    fileWriter.close();
+                                    Desktop.getDesktop().open(new File(directory));
+                                } catch (IOException ioException) {
+                                    ioException.printStackTrace();
+                                }
+
+
+                            }
+                            else {
+                                System.out.println("No Selection ");
+                            }
+
+                            /*
+                            groups.get(jList.getSelectedIndex()).deleteUserFromGroup(user.getIdUser());
+                            defaultListModel.remove(jList.getSelectedIndex());
+                            jSplitPane.setRightComponent(null);
+                             */
+                        }
+
+                    });
+
                     menu.add(itemRename);
                     menu.add(itemAddUser);
                     menu.add(itemRemoveUser);
                     menu.add(itemDelete);
+                    menu.add(itemExport);
                     menu.add(itemLeave);
                     menu.show(jList, e.getPoint().x, e.getPoint().y);
                 }
@@ -480,7 +555,6 @@ public class Aplicatie {
         jPanel.add(button1,gridBagConstraints);
         return jPanel;
     }
-
     private static void getCreateUser(){
         fereastra.setTitle("Create new account");
         fereastra.setVisible(true);
@@ -536,7 +610,7 @@ public class Aplicatie {
                         ok=true;
                     }
                 }
-                button.setEnabled(!first_name_text.getText().equals("") && !last_name_text.getText().equals("") && !email_text.getText().equals("")  && !dob_text.getText().equals("")  && !password_text.getText().equals("") && ok );
+                button.setEnabled(!first_name_text.getText().equals("") && !last_name_text.getText().equals("") && Utils.match_mail(email_text.getText())  && match_dob(dob_text.getText()) && !password_text.getText().equals("") && ok );
             }
         };
         radio1.addActionListener(e -> button.setEnabled(!first_name_text.getText().equals("") && !last_name_text.getText().equals("") && !email_text.getText().equals("")  && !dob_text.getText().equals("")  && !password_text.getText().equals("")));
@@ -567,8 +641,6 @@ public class Aplicatie {
             }
 
         });
-
-
         jPanel.add(first_name_label);
         jPanel.add(first_name_text);
         jPanel.add(last_name_label);
@@ -581,8 +653,6 @@ public class Aplicatie {
         jPanel.add(password_label);
         jPanel.add(password_text);
         jPanel.add(button);
-
-
         jPanel.add(button);
         Button button1 = new Button("Go back to login screen");
         button1.addActionListener(new ActionListener() {
@@ -594,6 +664,189 @@ public class Aplicatie {
         jPanel.add(button1);
         fereastra.setContentPane(jPanel);
 
+    }
+    private static void getForgotPassword(){
+        fereastra.setTitle("Forgot Password");
+        fereastra.setVisible(true);
+        JPanel jPanel = new JPanel();
+        fereastra.setSize(new Dimension(500,500));
+        jPanel.setSize(fereastra.getSize());
+        jPanel.setVisible(true);
+        jPanel.add(new JLabel("Enter Email: "));
+        JTextField jTextField = new JTextField("",30);
+        jPanel.add(jTextField);
+        JButton jButton = new JButton("Verify code");
+        jButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                getVerifyCode();
+            }
+        });
+        JButton jButton1 = new JButton("Send code");
+        jTextField.getDocument().addDocumentListener(new DocumentListener() {
+            public void changedUpdate(DocumentEvent e) {
+                changed();
+            }
+            public void removeUpdate(DocumentEvent e) {
+                changed();
+            }
+            public void insertUpdate(DocumentEvent e) {
+                changed();
+            }
+            public void changed() {
+                jButton1.setEnabled(Utils.match_mail(jTextField.getText()));
+            }
+        });
+        jButton1.setEnabled(false);
+        jButton1.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                synchronized (object){
+                    Connection conn = null;
+                    try {
+                        conn = DriverManager.getConnection(Utils.connectionString,Utils.user, Utils.password);
+                        String query = "UPDATE users set verification_code=? where email=?";
+                        PreparedStatement preparedStatement = conn.prepareStatement(query);
+                        String code = new Random().ints(10, 65, 101).mapToObj(i -> String.valueOf((char) i)).collect(Collectors.joining());
+                        preparedStatement.setString(1,code);
+                        preparedStatement.setString(2,jTextField.getText().trim().toLowerCase(Locale.ROOT));
+                        if(preparedStatement.executeUpdate()>0){
+                            send_code_via_mail(jTextField.getText().trim().toLowerCase(Locale.ROOT),code);
+                        }
+                        getForgotPassword();
+                    } catch (SQLException throwables) {
+                        throwables.printStackTrace();
+                    }
+
+                }
+            }
+        });
+        jPanel.add(jButton);
+        jPanel.add(jButton1);
+        JButton jButton2 = new JButton("Go back to Login screen");
+        jButton2.addActionListener(e1 -> getEcranConectare());
+        jPanel.add(jButton2);
+        fereastra.setContentPane(jPanel);
+    }
+    private static boolean send_code_via_mail(String to,String code){
+        String from = "server@cti.ro";
+        String host = "smtp.mailtrap.io";
+        Properties properties = new Properties();
+        properties.put("mail.transport.protocol", "smtp");
+        properties.setProperty("mail.smtp.host", host);
+        properties.put("mail.smtp.port", "2525");
+        properties.put("mail.smtp.auth", "true");
+        Authenticator authenticator = new Authenticator() {
+            protected PasswordAuthentication getPasswordAuthentication() {
+                return new PasswordAuthentication("ade94f3825269e", "4d986cc037cffc");
+            }
+        };
+        Session session = Session.getDefaultInstance(properties,authenticator);
+        try {
+            MimeMessage message = new MimeMessage(session);
+            message.setFrom(new InternetAddress(from));
+            message.addRecipient(javax.mail.Message.RecipientType.TO, new InternetAddress(to));
+            message.setSubject("Verification code");
+            message.setText("The verification code is: "+code+".");
+            Transport.send(message);
+            return true;
+        } catch (MessagingException mex) {
+            mex.printStackTrace();
+            return false;
+        }
+    }
+    private static void getVerifyCode(){
+        fereastra.setTitle("Verify Code");
+        fereastra.setVisible(true);
+        JPanel jPanel = new JPanel();
+        fereastra.setSize(new Dimension(500,500));
+        jPanel.setSize(fereastra.getSize());
+        jPanel.setVisible(true);
+        jPanel.add(new JLabel("Enter Verification code: "));
+        JTextField jTextField = new JTextField("",30);
+        jPanel.add(jTextField);
+        JButton jButton = new JButton("Verify code");
+        jButton.setEnabled(false);
+        jPanel.add(jButton);
+        jButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                try {
+                    User user = User.my_search_code(jTextField.getText());
+                    if(user!=null){
+                        JPanel jPanel1 = new JPanel();
+                        jPanel1.setSize(fereastra.getSize());
+                        jPanel1.setVisible(true);
+                        jPanel1.add(new JLabel("New Password"));
+                        JTextField jTextField1 = new JPasswordField("",30);
+                        jPanel1.add(jTextField1);
+                        JButton jButton1 = new JButton("Change password");
+                        jButton1.setEnabled(false);
+                        jTextField1.getDocument().addDocumentListener(new DocumentListener() {
+                            public void changedUpdate(DocumentEvent e) {
+                                changed();
+                            }
+                            public void removeUpdate(DocumentEvent e) {
+                                changed();
+                            }
+                            public void insertUpdate(DocumentEvent e) {
+                                changed();
+                            }
+                            public void changed() {
+                                jButton1.setEnabled(!jTextField1.getText().equals(""));
+                            }
+                        });
+                        jButton1.addActionListener(new ActionListener() {
+                            @Override
+                            public void actionPerformed(ActionEvent e) {
+                                if(User.edit_password(user.getIdUser(),jTextField1.getText())){
+                                    getEcranConectare();
+                                }
+                            }
+                        });
+                        jPanel1.add(jButton1);
+                        JButton jButton2 = new JButton("Go back to Login screen");
+                        jButton2.addActionListener(e1 -> getEcranConectare());
+                        jPanel1.add(jButton2);
+                        fereastra.setContentPane(jPanel1);
+                    }
+
+                } catch (SQLException throwables) {
+                    throwables.printStackTrace();
+                }
+            }
+        });
+        jTextField.getDocument().addDocumentListener(new DocumentListener() {
+            public void changedUpdate(DocumentEvent e) {
+                changed();
+            }
+            public void removeUpdate(DocumentEvent e) {
+                changed();
+            }
+            public void insertUpdate(DocumentEvent e) {
+                changed();
+            }
+            public void changed() {
+                jButton.setEnabled(!jTextField.getText().equals(""));
+            }
+        });
+        JButton jButton2 = new JButton("Go back to Login screen");
+        jButton2.addActionListener(e1 -> getEcranConectare());
+        jPanel.add(jButton2);
+        fereastra.setContentPane(jPanel);
+
+    }
+
+    private static boolean match_dob(String dob){
+        SimpleDateFormat format = new SimpleDateFormat("d/MM/yyyy");
+        format.setLenient(false);
+        try {
+            format.parse(dob);
+            return true;
+        }
+        catch(ParseException e){
+            return false;
+        }
     }
     public static void main(String[] args) {
         fereastra.setVisible(true);
@@ -609,6 +862,8 @@ public class Aplicatie {
         }
          */
         getEcranConectare();
+
     }
+
 
 }

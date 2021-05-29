@@ -10,7 +10,8 @@ CREATE TABLE users(
     email VARCHAR(50) NOT NULL UNIQUE,
     gender VARCHAR(1),
     birth_date DATE,
-    password VARCHAR(20) NOT NULL
+    password VARCHAR(20) NOT NULL,
+    verification_code VARCHAR(30) UNIQUE,
 ); CREATE TABLE groups(
     id_group INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
     title VARCHAR(30) NOT NULL

@@ -208,6 +208,45 @@ public class User implements IUser, Utils{
         return user;
     }
 
+    public static User my_search_code(String verification_code) throws SQLException {
+        User user = null;
+        if(verification_code==null){
+            return user;
+        }
+        Connection conn = null;
+        conn = DriverManager.getConnection(Utils.connectionString,Utils.user, Utils.password);
+        Statement stmt = conn.createStatement();
+        String query="SELECT id_user,first_name,last_name,email,gender,birth_date FROM users WHERE verification_code="+"'"+verification_code+"'";
+        ResultSet rs=stmt.executeQuery(query);
+        if(rs.next()) {
+            user = new User();
+            user.setIdUser(rs.getInt("id_user"));
+            user.setFirstName(rs.getString("first_name"));
+            user.setLastName(rs.getString("last_name"));
+            user.setEmail(rs.getString("email"));
+            user.setGender(rs.getString("gender"));
+            user.setBirthDate(rs.getDate("birth_date").toLocalDate());
+        }
+        return user;
+    }
+    public static boolean edit_password(int id_user, String password){
+        if(password!=null) {
+            Connection conn = null;
+            try {
+                conn = DriverManager.getConnection(Utils.connectionString, Utils.user, Utils.password);
+                String query = "UPDATE users set verification_code=NULL, password=? where id_user=?";
+                PreparedStatement pstmt = conn.prepareStatement(query);
+                pstmt.setString(1,password);
+                pstmt.setInt(2,id_user);
+                return pstmt.executeUpdate() > 0;
+            } catch (SQLException throwables) {
+                throwables.printStackTrace();
+                return false;
+            }
+        }
+        return false;
+    }
+
     @Override
     public boolean logout() {
         this.loginStatus=false;
