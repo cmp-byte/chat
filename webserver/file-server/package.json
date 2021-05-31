@@ -1,0 +1,19 @@
+{
+  "name": "file-server",
+  "version": "0.0.1",
+  "description": "Simple file server, gets the file, returns the link to access that file.",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node ./index.js"
+  },
+  "author": "Ionnier",
+  "license": "MIT",
+  "dependencies": {
+    "express": "^4.17.1",
+    "express-fileupload": "^1.2.1",
+    "formidable": "^1.2.2",
+    "mime": "^2.5.2",
+    "mime-db": "^1.47.0"
+  }
+}
