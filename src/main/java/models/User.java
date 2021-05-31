@@ -194,7 +194,7 @@ public class User implements IUser, Utils{
         Connection conn = null;
         conn = DriverManager.getConnection(Utils.connectionString,Utils.user, Utils.password);
         Statement stmt = conn.createStatement();
-        String query="SELECT id_user,first_name,last_name,email,gender,birth_date FROM chat.users WHERE email="+"'"+email+"'"+"AND password="+"'"+password+"'";
+        String query="SELECT id_user,first_name,last_name,email,gender,birth_date FROM   users WHERE email="+"'"+email+"'"+"AND password="+"'"+password+"'";
         ResultSet rs=stmt.executeQuery(query);
         if(rs.next()) {
             user = new User();
@@ -206,6 +206,45 @@ public class User implements IUser, Utils{
             user.setBirthDate(rs.getDate("birth_date").toLocalDate());
         }
         return user;
+    }
+
+    public static User my_search_code(String verification_code) throws SQLException {
+        User user = null;
+        if(verification_code==null){
+            return user;
+        }
+        Connection conn = null;
+        conn = DriverManager.getConnection(Utils.connectionString,Utils.user, Utils.password);
+        Statement stmt = conn.createStatement();
+        String query="SELECT id_user,first_name,last_name,email,gender,birth_date FROM users WHERE verification_code="+"'"+verification_code+"'";
+        ResultSet rs=stmt.executeQuery(query);
+        if(rs.next()) {
+            user = new User();
+            user.setIdUser(rs.getInt("id_user"));
+            user.setFirstName(rs.getString("first_name"));
+            user.setLastName(rs.getString("last_name"));
+            user.setEmail(rs.getString("email"));
+            user.setGender(rs.getString("gender"));
+            user.setBirthDate(rs.getDate("birth_date").toLocalDate());
+        }
+        return user;
+    }
+    public static boolean edit_password(int id_user, String password){
+        if(password!=null) {
+            Connection conn = null;
+            try {
+                conn = DriverManager.getConnection(Utils.connectionString, Utils.user, Utils.password);
+                String query = "UPDATE users set verification_code=NULL, password=? where id_user=?";
+                PreparedStatement pstmt = conn.prepareStatement(query);
+                pstmt.setString(1,password);
+                pstmt.setInt(2,id_user);
+                return pstmt.executeUpdate() > 0;
+            } catch (SQLException throwables) {
+                throwables.printStackTrace();
+                return false;
+            }
+        }
+        return false;
     }
 
     @Override
@@ -233,7 +272,7 @@ public class User implements IUser, Utils{
                 case "1":
                     System.out.println("Introduceti numele");
                     String lastName = myObj.nextLine();  // Read user input
-                    String query = "SELECT * FROM chat.users WHERE last_name=" + "'" + lastName + "'";
+                    String query = "SELECT * FROM   users WHERE last_name=" + "'" + lastName + "'";
                     ResultSet rs = stmt.executeQuery(query);
                     while (rs.next()) {
                         int id = rs.getInt(1);
@@ -252,7 +291,7 @@ public class User implements IUser, Utils{
                 case "2":
                     System.out.println("Introduceti prenumele");
                     String firstName = myObj.nextLine();  // Read user input
-                    String query2 = "SELECT * FROM chat.users WHERE first_name=" + "'" + firstName + "'";
+                    String query2 = "SELECT * FROM   users WHERE first_name=" + "'" + firstName + "'";
                     ResultSet rs2 = stmt.executeQuery(query2);
                     while (rs2.next()) {
                         int id = rs2.getInt(1);
@@ -271,7 +310,7 @@ public class User implements IUser, Utils{
                 case "3":
                     System.out.println("Introduceti email");
                     String email = myObj.nextLine();  // Read user input
-                    String query3 = "SELECT * FROM chat.users WHERE email=" + "'" + email + "'";
+                    String query3 = "SELECT * FROM   users WHERE email=" + "'" + email + "'";
                     ResultSet rs3 = stmt.executeQuery(query3);
                     while (rs3.next()) {
                         int id = rs3.getInt(1);
@@ -303,7 +342,7 @@ public class User implements IUser, Utils{
             List<User> listaUser = new ArrayList<>();
             switch (criteriu) {
                 case "1" -> {
-                    String query = "SELECT * FROM chat.users WHERE last_name=" + "'" + to_search + "'";
+                    String query = "SELECT * FROM   users WHERE last_name=" + "'" + to_search + "'";
                     ResultSet rs = stmt.executeQuery(query);
                     while (rs.next()) {
                         int id = rs.getInt("id_user");
@@ -317,7 +356,7 @@ public class User implements IUser, Utils{
                     }
                 }
                 case "2" -> {
-                    String query2 = "SELECT * FROM chat.users WHERE first_name=" + "'" + to_search + "'";
+                    String query2 = "SELECT * FROM   users WHERE first_name=" + "'" + to_search + "'";
                     ResultSet rs2 = stmt.executeQuery(query2);
                     while (rs2.next()) {
                         int id = rs2.getInt("id_user");
@@ -331,7 +370,7 @@ public class User implements IUser, Utils{
                     }
                 }
                 case "3" -> {
-                    String query3 = "SELECT * FROM chat.users WHERE email=" + "'" + to_search + "'";
+                    String query3 = "SELECT * FROM   users WHERE email=" + "'" + to_search + "'";
                     ResultSet rs3 = stmt.executeQuery(query3);
                     while (rs3.next()) {
                         int id = rs3.getInt("id_user");

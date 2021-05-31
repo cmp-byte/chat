@@ -29,6 +29,23 @@
           <artifactId>httpmime</artifactId>
           <version>4.3.1</version>
         </dependency>
+          <dependency>
+              <groupId>commons-validator</groupId>
+              <artifactId>commons-validator</artifactId>
+              <version>1.4.1</version>
+          </dependency>
+          <dependency>
+              <groupId>org.simplejavamail</groupId>
+              <artifactId>simple-java-mail</artifactId>
+              <version>5.0.0</version>
+          </dependency>
+          <dependency>
+              <groupId>net.markenwerk</groupId>
+              <artifactId>utils-mail-dkim</artifactId>
+              <version>2.0.1</version>
+          </dependency>
 
-    </dependencies>
+
+
+      </dependencies>
 </project>
